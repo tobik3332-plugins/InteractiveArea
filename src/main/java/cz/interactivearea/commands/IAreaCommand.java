@@ -9,7 +9,9 @@ import cz.interactivearea.utils.MessageUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -83,7 +85,6 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Vsechny ostatni prikazy vyzadují iarea.admin
         if (!sender.hasPermission("iarea.admin")) {
             MessageUtil.sendConfigMessage(sender, "no-permission");
             return true;
@@ -168,7 +169,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // /iarea area <nazev> <pos1|pos2|addaction|action-list|permission|removeaction|editaction>
+        // /iarea area <nazev> ...
         if (sub.equals("area")) {
             if (args.length < 3) {
                 sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area <nazev> <pos1|pos2|addaction|action-list|permission>"));
@@ -177,7 +178,6 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             String areaName = args[1];
             String areaSub = args[2].toLowerCase();
 
-            // pos1 a pos2 se zadavaji behem vytvareni (nebo upravy)
             if (areaSub.equals("pos1") || areaSub.equals("pos2")) {
                 if (!(sender instanceof Player player)) {
                     MessageUtil.sendConfigMessage(sender, "only-players");
@@ -199,7 +199,6 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // /iarea area <nazev> permission <permise>
             if (areaSub.equals("permission")) {
                 if (args.length < 4) {
                     sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area " + area.getName() + " permission <permise>"));
@@ -211,7 +210,6 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // /iarea area <nazev> addaction ...
             if (areaSub.equals("addaction")) {
                 if (args.length < 4) {
                     sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area " + area.getName() + " addaction <teleport|commands|text> ..."));
@@ -268,13 +266,11 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                 }
             }
 
-            // /iarea area <nazev> action-list
             if (areaSub.equals("action-list")) {
                 sendActionList(sender, area);
                 return true;
             }
 
-            // Interni prikaz pro smazani kliknutim na (-)
             if (areaSub.equals("removeaction") && args.length >= 4) {
                 AreaAction toRemove = area.getActionById(args[3]);
                 if (toRemove != null) {
@@ -286,13 +282,44 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Interni prikaz pro zahajeni editace kliknutim na %value%
-            if (areaSub.equals("editaction") && args.length >= 4 && sender instanceof Player player) {
-                AreaAction toEdit = area.getActionById(args[3]);
-                if (toEdit != null) {
-                    areaManager.getPendingEdits().put(player.getUniqueId(), new AreaManager.PendingEdit(area.getName(), toEdit.getId()));
-                    player.sendMessage(MessageUtil.parse("&eNapis novou hodnotu do chatu a odesli ji (Enter)."));
+            // Přímá aktualizace hodnoty akce přes /iarea area <nazev> setvalue <id> <nova_hodnota>
+            if (areaSub.equals("setvalue") && args.length >= 5) {
+                String actionId = args[3];
+                String newValue = String.join(" ", Arrays.copyOfRange(args, 4, args.length));
+
+                AreaAction action = area.getActionById(actionId);
+                if (action == null) {
+                    sender.sendMessage(MessageUtil.parse("&cAkce s timto ID neexistuje!"));
+                    return true;
                 }
+
+                if (action.getType() == AreaAction.ActionType.TELEPORT) {
+                    String[] parts = newValue.trim().split("\\s+");
+                    if (parts.length < 4) {
+                        MessageUtil.sendConfigMessage(sender, "invalid-teleport-format");
+                        return true;
+                    }
+                    World world = Bukkit.getWorld(parts[0]);
+                    if (world == null) {
+                        MessageUtil.sendConfigMessage(sender, "invalid-teleport-format");
+                        return true;
+                    }
+                    try {
+                        Double.parseDouble(parts[1]);
+                        Double.parseDouble(parts[2]);
+                        Double.parseDouble(parts[3]);
+                    } catch (NumberFormatException e) {
+                        MessageUtil.sendConfigMessage(sender, "invalid-teleport-format");
+                        return true;
+                    }
+                    action.setValue(parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3]);
+                } else {
+                    action.setValue(newValue);
+                }
+
+                areaManager.saveArea(area);
+                MessageUtil.sendConfigMessage(sender, "action-updated");
+                sendActionList(sender, area);
                 return true;
             }
         }
@@ -319,7 +346,6 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                     ? action.getCleanTeleportSuggest()
                     : action.getValue();
 
-            // Rozdeleni radku podle placeholderu pro presne prirazeni ClickEventu
             String[] splitType = lineFormat.split("%type%", 2);
             String beforeType = splitType[0];
             String afterType = splitType.length > 1 ? splitType[1] : "";
@@ -332,30 +358,14 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             String beforeRemove = splitRemove[0];
             String afterRemove = splitRemove.length > 1 ? splitRemove[1] : "";
 
-            // 1. Cast pred typem + samotny %type% (bez klikaci akce)
             Component lineComp = MessageUtil.parse(beforeType + typeStr + betweenTypeAndVal);
 
-            // 2. Cast %value% (kliknutim doplni hodnotu do chatu + aktivuje rezim editace)
-            String suggestValue = action.getType() == AreaAction.ActionType.TELEPORT
-                    ? action.getCleanTeleportSuggest()
-                    : action.getValue();
-
+            // Kliknutím na %value% se předvyplní příkaz /iarea area <nazev> setvalue <id> <hodnota> do chatu
+            String suggestCommandText = "/iarea area " + area.getName() + " setvalue " + action.getId() + " " + displayVal;
             Component valueComp = MessageUtil.parse(displayVal)
-                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&aKlikni pro upravu hodnoty")))
-                    .clickEvent(ClickEvent.suggestCommand(suggestValue));
+                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&eKlikni pro rychlou upravu v chatu")))
+                    .clickEvent(ClickEvent.suggestCommand(suggestCommandText));
 
-            // Aktivace editacniho rezimu pri kliknuti na value pomoci run_command neni mozna soucasne se suggest_command,
-            // proto pouzijeme trik: kliknutim na value se spusti prikaz, ktery hraci posle klikaci zpravu nebo rovnou nastavi rezim.
-            // V Paper API lze na jednu komponentu dat pouze 1 ClickEvent. Nejlepsi UX:
-            // Kliknutim na %value% se spusti /iarea area <nazev> editaction <id> a zaroven se doplni text pres chat prompt,
-            // NEBO suggestCommand primo doplni text a hrac pred nej nic nepise - zde pouzijeme ciste suggestCommand
-            // a editaci navazeme pres klikaci komponentu:
-            valueComp = Component.empty()
-                    .append(MessageUtil.parse(displayVal))
-                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&eKlikni pro upravu hodnoty")))
-                    .clickEvent(ClickEvent.runCommand("/iarea area " + area.getName() + " editaction " + action.getId()));
-
-            // 3. Cast (-) pro okamzite smazani
             Component removeComp = MessageUtil.parse(beforeRemove)
                     .append(MessageUtil.parse("&c(-)")
                             .hoverEvent(HoverEvent.showText(MessageUtil.parse("&cKlikni pro smazani akce")))
