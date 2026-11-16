@@ -35,7 +35,7 @@ public class InteractiveAreaPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerMoveListener(areaManager), this);
         getServer().getPluginManager().registerEvents(new ChatEditListener(this, areaManager), this);
 
-        getLogger().info("InteractiveArea byl uspesne aktivovan!");
+        getLogger().info("InteractiveArea byl úspěšně aktivován!");
     }
 
     @Override
@@ -43,7 +43,7 @@ public class InteractiveAreaPlugin extends JavaPlugin {
         if (visualizerManager != null) {
             visualizerManager.stopTask();
         }
-        getLogger().info("InteractiveArea byl deaktivovan.");
+        getLogger().info("InteractiveArea byl deaktivován.");
     }
 
     public static InteractiveAreaPlugin getInstance() {
