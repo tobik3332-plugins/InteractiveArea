@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(MessageUtil.parse("&bInteractiveArea &7- Použij &e/iarea <admin|area|tp|area-visualize|reload>"));
+            sender.sendMessage(MessageUtil.parse("&cInteractiveArea &7- Použij &c/iarea <admin|area|tp|area-visualize|reload>"));
             return true;
         }
 
@@ -111,13 +112,24 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // /iarea admin <create|delete> <název>
+        // /iarea admin <list|create|delete> [název]
         if (sub.equals("admin")) {
+            if (args.length < 2) {
+                sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea admin <list|create|delete> [název]"));
+                return true;
+            }
+            String adminAction = args[1].toLowerCase();
+
+            // /iarea admin list
+            if (adminAction.equals("list")) {
+                sendAreaList(sender);
+                return true;
+            }
+
             if (args.length < 3) {
                 sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea admin <create|delete> <název>"));
                 return true;
             }
-            String adminAction = args[1].toLowerCase();
             String areaName = args[2];
 
             if (adminAction.equals("create")) {
@@ -326,9 +338,40 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private void sendAreaList(CommandSender sender) {
+        String header = plugin.getConfig().getString("messages.area-list-header", "&cSeznam všech oblastí na serveru:");
+        sender.sendMessage(MessageUtil.parse(header));
+
+        Collection<Area> allAreas = areaManager.getAllAreas();
+        if (allAreas.isEmpty()) {
+            String empty = plugin.getConfig().getString("messages.area-list-empty", "&7- &oŽádné oblasti zatím nebyly vytvořeny.");
+            sender.sendMessage(MessageUtil.parse(empty));
+            return;
+        }
+
+        String lineFormat = plugin.getConfig().getString("messages.area-list-line", "&7- &c%area% &8(&7%world%: %pos1% -> %pos2%&8)");
+
+        for (Area area : allAreas) {
+            String pos1Str = String.format(Locale.US, "%d, %d, %d", (int) area.getMinX(), (int) area.getMinY(), (int) area.getMinZ());
+            String pos2Str = String.format(Locale.US, "%d, %d, %d", (int) (area.getMaxX() - 1), (int) (area.getMaxY() - 1), (int) (area.getMaxZ() - 1));
+
+            String formatted = lineFormat
+                    .replace("%area%", area.getName())
+                    .replace("%world%", area.getWorldName())
+                    .replace("%pos1%", pos1Str)
+                    .replace("%pos2%", pos2Str);
+
+            Component lineComp = MessageUtil.parse(formatted)
+                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&7Klikni pro teleportaci k oblasti &c" + area.getName())))
+                    .clickEvent(ClickEvent.runCommand("/iarea tp " + area.getName()));
+
+            sender.sendMessage(lineComp);
+        }
+    }
+
     public static void sendActionList(CommandSender sender, Area area) {
         InteractiveAreaPlugin plugin = InteractiveAreaPlugin.getInstance();
-        String header = plugin.getConfig().getString("messages.action-list-header", "&bAkce dané oblasti jsou:");
+        String header = plugin.getConfig().getString("messages.action-list-header", "&cAkce dané oblasti jsou:");
         sender.sendMessage(MessageUtil.parse(header));
 
         if (area.getActions().isEmpty()) {
@@ -337,7 +380,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        String lineFormat = plugin.getConfig().getString("messages.action-list-line", "&7- &e%type% %value% &c(-)");
+        String lineFormat = plugin.getConfig().getString("messages.action-list-line", "&7- &c%type% %value% &c(-)");
 
         for (AreaAction action : area.getActions()) {
             String typeStr = action.getType().getDisplayName();
@@ -361,7 +404,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
 
             String suggestCommandText = "/iarea area " + area.getName() + " setvalue " + action.getId() + " " + displayVal;
             Component valueComp = MessageUtil.parse(displayVal)
-                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&eKlikni pro rychlou úpravu v chatu")))
+                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&cKlikni pro rychlou úpravu v chatu")))
                     .clickEvent(ClickEvent.suggestCommand(suggestCommandText));
 
             Component removeComp = MessageUtil.parse(beforeRemove)
@@ -391,7 +434,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             if (sub.equals("admin") && sender.hasPermission("iarea.admin")) {
-                completions.addAll(Arrays.asList("create", "delete"));
+                completions.addAll(Arrays.asList("list", "create", "delete"));
             } else if ((sub.equals("area") || sub.equals("area-visualize")) && sender.hasPermission("iarea.admin")) {
                 completions.addAll(getAreaNames());
             } else if (sub.equals("tp") && sender.hasPermission("iarea.tp")) {
