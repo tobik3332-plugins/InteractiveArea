@@ -17,7 +17,6 @@ import java.util.*;
 public class PlayerMoveListener implements Listener {
 
     private final AreaManager areaManager;
-    // Sleduje, ve kterych oblastech se hrac prave nachazi, aby se akce spustily jen pri vstupu
     private final Map<UUID, Set<String>> playersInAreas = new HashMap<>();
 
     public PlayerMoveListener(AreaManager areaManager) {
@@ -27,9 +26,10 @@ public class PlayerMoveListener implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Location to = event.getTo();
-        if (to == null) return;
+        if (to == null) {
+            return;
+        }
 
-        // Optimalizace: kontrolovat jen pri zmene bloku nebo souradnic
         if (event.getFrom().getX() == to.getX()
                 && event.getFrom().getY() == to.getY()
                 && event.getFrom().getZ() == to.getZ()) {
@@ -53,7 +53,6 @@ public class PlayerMoveListener implements Listener {
     }
 
     private void executeAreaActions(Player player, Area area) {
-        // Kontrola permise oblasti, pokud je nastavena
         String perm = area.getPermission();
         if (perm != null && !perm.isEmpty() && !player.hasPermission(perm)) {
             return;
@@ -67,13 +66,13 @@ public class PlayerMoveListener implements Listener {
                         player.teleport(target);
                     }
                 }
-                case COMMAND -> {
+                case COMMAND_PLAYER -> {
                     String cmd = action.getValue().replace("%player%", player.getName());
-                    if (action.getExecutorType() == AreaAction.CommandExecutorType.PLAYER) {
-                        player.performCommand(cmd);
-                    } else {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-                    }
+                    player.performCommand(cmd);
+                }
+                case COMMAND_CONSOLE -> {
+                    String cmd = action.getValue().replace("%player%", player.getName());
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
                 }
                 case TEXT_MESSAGE -> {
                     String msg = action.getValue().replace("%player%", player.getName());
