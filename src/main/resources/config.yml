@@ -1,0 +1,48 @@
+# ========================================================
+# Seznam opravneni (Permissions) a jejich vyznam:
+# - iarea.admin  : Povoluje prikazy /iarea admin ..., /iarea area ... a /iarea area-visualize ...
+# - iarea.tp     : Povoluje prikaz /iarea tp <nazev> pro teleportaci k oblasti
+# - iarea.reload : Povoluje prikaz /iarea reload pro znovunacteni nastaveni a oblasti
+# ========================================================
+
+settings:
+  # Typ partiklu pro vizualizaci oblasti (napr. CLOUD, FLAME, HAPPY_VILLAGER, END_ROD)
+  visualize-particle: CLOUD
+
+messages:
+  prefix: "&8[&bInteractiveArea&8] &r"
+  no-permission: "&cNa tento prikaz nemas opravneni!"
+  only-players: "&cTento prikaz mohou pouzit pouze hraci ve hre."
+  reload-success: "&aPlugin, config.yml a vsechny oblasti byly uspesne reloadovany!"
+  area-not-found: "&cOblast &e%area% &cneexistuje!"
+  area-already-exists: "&cOblast &e%area% &cjiz existuje!"
+  
+  # Vytvareni oblasti
+  create-started: "&aZahajil jsi vytvareni oblasti &e%area%&a. Nyni nastav &f/iarea area %area% pos1 &aa &fpos2&a, pote napis znovu &f/iarea admin create %area%&a."
+  create-missing-pos: "&cMusis nejdrive nastavit oba body (pos1 a pos2) ve stejnem svete!"
+  create-success: "&aOblast &e%area% &abyla uspesne vytvorena a ulozena!"
+  pos1-set: "&aBod &ePOS 1 &apro oblast &e%area% &abyl nastaven na tve aktualni pozici."
+  pos2-set: "&aBod &ePOS 2 &apro oblast &e%area% &abyl nastaven na tve aktualni pozici."
+  
+  # Mazani oblasti
+  delete-confirm: "&eOpravdu chces smazat oblast &c%area%&e? Napis prikaz &f/iarea admin delete %area% &eznovu do 5 sekund pro potvrzeni."
+  delete-success: "&aOblast &e%area% &aa jeji soubor byly uspesne smazany."
+  
+  # Teleportace
+  tp-success: "&aByl jsi teleportovan k oblasti &e%area%&a."
+  
+  # Vizualizace
+  visualize-on: "&aVizualizace oblasti &e%area% &abyla &2ZAPNUTA&a."
+  visualize-off: "&aVizualizace oblasti &e%area% &abyla &cVYPNUTA&a."
+  
+  # Nastaveni akce a permise
+  permission-set: "&aPermise oblasti &e%area% &abyla nastavena na &f%permission%&a."
+  action-added: "&aAkce typu &e%type% &abyla pridana do oblasti &e%area%&a."
+  action-removed: "&cAkce byla odebrana z oblasti &e%area%&c."
+  action-updated: "&aHodnota akce byla uspesne aktualizovana!"
+  invalid-teleport-format: "&cSpatny format! Pouzij: &esvet x y z &c(napr. world 100.5 64 -20.0)"
+  
+  # Vzhled /iarea area <nazev> action-list
+  action-list-header: "&bAkce dane oblasti jsou:"
+  action-list-empty: "&7- &oZadne akce nejsou nastaveny."
+  action-list-line: "&7- &e%type% %value% &c(-)"
