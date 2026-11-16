@@ -10,7 +10,8 @@ public class AreaAction {
 
     public enum ActionType {
         TELEPORT("teleport"),
-        COMMAND("command"),
+        COMMAND_PLAYER("command-player"),
+        COMMAND_CONSOLE("command-console"),
         TEXT_MESSAGE("text-message"),
         TEXT_BROADCAST("text-brodcast");
 
@@ -25,14 +26,9 @@ public class AreaAction {
         }
     }
 
-    public enum CommandExecutorType {
-        PLAYER, CONSOLE
-    }
-
     private final String id;
     private final ActionType type;
-    private CommandExecutorType executorType; // Pouze pro COMMAND
-    private String value; // Raw hodnota (pro text s barvami, pro prikaz bez /, pro tp "world x y z")
+    private String value;
 
     public AreaAction(ActionType type, String value) {
         this.id = UUID.randomUUID().toString().substring(0, 8);
@@ -40,10 +36,9 @@ public class AreaAction {
         this.value = value;
     }
 
-    public AreaAction(String id, ActionType type, CommandExecutorType executorType, String value) {
+    public AreaAction(String id, ActionType type, String value) {
         this.id = id;
         this.type = type;
-        this.executorType = executorType;
         this.value = value;
     }
 
@@ -55,14 +50,6 @@ public class AreaAction {
         return type;
     }
 
-    public CommandExecutorType getExecutorType() {
-        return executorType;
-    }
-
-    public void setExecutorType(CommandExecutorType executorType) {
-        this.executorType = executorType;
-    }
-
     public String getValue() {
         return value;
     }
@@ -72,11 +59,17 @@ public class AreaAction {
     }
 
     public Location parseTeleportLocation() {
-        if (type != ActionType.TELEPORT || value == null) return null;
+        if (type != ActionType.TELEPORT || value == null) {
+            return null;
+        }
         String[] parts = value.split(" ");
-        if (parts.length < 4) return null;
+        if (parts.length < 4) {
+            return null;
+        }
         World world = Bukkit.getWorld(parts[0]);
-        if (world == null) return null;
+        if (world == null) {
+            return null;
+        }
         try {
             double x = Double.parseDouble(parts[1]);
             double y = Double.parseDouble(parts[2]);
@@ -90,7 +83,9 @@ public class AreaAction {
     }
 
     public String getCleanTeleportSuggest() {
-        if (type != ActionType.TELEPORT || value == null) return "";
+        if (type != ActionType.TELEPORT || value == null) {
+            return "";
+        }
         String[] parts = value.split(" ");
         if (parts.length >= 4) {
             return parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3];
