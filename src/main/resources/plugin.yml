@@ -1,0 +1,21 @@
+name: InteractiveArea
+version: '${project.version}'
+main: cz.interactivearea.InteractiveAreaPlugin
+api-version: '1.21'
+description: Interaktivni oblasti s akcemi, vizualizaci a chat editem.
+
+commands:
+  iarea:
+    description: Hlavni prikaz pluginu InteractiveArea
+    usage: /iarea <admin|area|tp|area-visualize|reload>
+
+permissions:
+  iarea.admin:
+    description: Umoznuje vytvaret, mazat a upravovat oblasti a jejich akce
+    default: op
+  iarea.tp:
+    description: Umoznuje teleportovat se k oblastem pomoci /iarea tp
+    default: op
+  iarea.reload:
+    description: Umoznuje reloadovat konfiguraci a oblasti
+    default: op
