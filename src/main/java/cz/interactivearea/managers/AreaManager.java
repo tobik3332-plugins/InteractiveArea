@@ -17,15 +17,10 @@ public class AreaManager {
     private final File areasFolder;
     private final Map<String, Area> areas = new HashMap<>();
 
-    // Docasne uloziste pro proces vytvareni
     private final Set<String> creationSessions = new HashSet<>();
     private final Map<String, Location> tempPos1 = new HashMap<>();
     private final Map<String, Location> tempPos2 = new HashMap<>();
-
-    // Docasne uloziste pro potvrzeni smazani (UUID hrace -> nazev oblasti + cas)
     private final Map<UUID, DeleteConfirmation> deleteConfirmations = new HashMap<>();
-
-    // Docasne uloziste pro chat editaci akci
     private final Map<UUID, PendingEdit> pendingEdits = new HashMap<>();
 
     public record DeleteConfirmation(String areaName, long timestamp) {}
@@ -42,7 +37,9 @@ public class AreaManager {
     public void loadAreas() {
         areas.clear();
         File[] files = areasFolder.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (files == null) return;
+        if (files == null) {
+            return;
+        }
 
         for (File file : files) {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -58,43 +55,48 @@ public class AreaManager {
 
             List<AreaAction> actions = new ArrayList<>();
 
-            // Nacteni teleportu
             if (config.isConfigurationSection("actions.teleports")) {
                 ConfigurationSection sec = config.getConfigurationSection("actions.teleports");
-                for (String key : sec.getKeys(false)) {
-                    actions.add(new AreaAction(key, AreaAction.ActionType.TELEPORT, null, sec.getString(key)));
+                if (sec != null) {
+                    for (String key : sec.getKeys(false)) {
+                        actions.add(new AreaAction(key, AreaAction.ActionType.TELEPORT, sec.getString(key)));
+                    }
                 }
             }
 
-            // Nacteni prikazu - player
             if (config.isConfigurationSection("actions.commands.player")) {
                 ConfigurationSection sec = config.getConfigurationSection("actions.commands.player");
-                for (String key : sec.getKeys(false)) {
-                    actions.add(new AreaAction(key, AreaAction.ActionType.COMMAND, AreaAction.CommandExecutorType.PLAYER, sec.getString(key)));
+                if (sec != null) {
+                    for (String key : sec.getKeys(false)) {
+                        actions.add(new AreaAction(key, AreaAction.ActionType.COMMAND_PLAYER, sec.getString(key)));
+                    }
                 }
             }
 
-            // Nacteni prikazu - console
             if (config.isConfigurationSection("actions.commands.console")) {
                 ConfigurationSection sec = config.getConfigurationSection("actions.commands.console");
-                for (String key : sec.getKeys(false)) {
-                    actions.add(new AreaAction(key, AreaAction.ActionType.COMMAND, AreaAction.CommandExecutorType.CONSOLE, sec.getString(key)));
+                if (sec != null) {
+                    for (String key : sec.getKeys(false)) {
+                        actions.add(new AreaAction(key, AreaAction.ActionType.COMMAND_CONSOLE, sec.getString(key)));
+                    }
                 }
             }
 
-            // Nacteni textu - message
             if (config.isConfigurationSection("actions.texts.message")) {
                 ConfigurationSection sec = config.getConfigurationSection("actions.texts.message");
-                for (String key : sec.getKeys(false)) {
-                    actions.add(new AreaAction(key, AreaAction.ActionType.TEXT_MESSAGE, null, sec.getString(key)));
+                if (sec != null) {
+                    for (String key : sec.getKeys(false)) {
+                        actions.add(new AreaAction(key, AreaAction.ActionType.TEXT_MESSAGE, sec.getString(key)));
+                    }
                 }
             }
 
-            // Nacteni textu - broadcast
             if (config.isConfigurationSection("actions.texts.broadcast")) {
                 ConfigurationSection sec = config.getConfigurationSection("actions.texts.broadcast");
-                for (String key : sec.getKeys(false)) {
-                    actions.add(new AreaAction(key, AreaAction.ActionType.TEXT_BROADCAST, null, sec.getString(key)));
+                if (sec != null) {
+                    for (String key : sec.getKeys(false)) {
+                        actions.add(new AreaAction(key, AreaAction.ActionType.TEXT_BROADCAST, sec.getString(key)));
+                    }
                 }
             }
 
@@ -117,7 +119,6 @@ public class AreaManager {
         config.set("bounds.maxY", area.getMaxY());
         config.set("bounds.maxZ", area.getMaxZ());
 
-        // Vytvoreni struktury sekci ihned po vytvoreni souboru
         config.createSection("actions.teleports");
         config.createSection("actions.commands.player");
         config.createSection("actions.commands.console");
@@ -127,13 +128,8 @@ public class AreaManager {
         for (AreaAction action : area.getActions()) {
             switch (action.getType()) {
                 case TELEPORT -> config.set("actions.teleports." + action.getId(), action.getValue());
-                case COMMAND -> {
-                    if (action.getExecutorType() == AreaAction.CommandExecutorType.PLAYER) {
-                        config.set("actions.commands.player." + action.getId(), action.getValue());
-                    } else {
-                        config.set("actions.commands.console." + action.getId(), action.getValue());
-                    }
-                }
+                case COMMAND_PLAYER -> config.set("actions.commands.player." + action.getId(), action.getValue());
+                case COMMAND_CONSOLE -> config.set("actions.commands.console." + action.getId(), action.getValue());
                 case TEXT_MESSAGE -> config.set("actions.texts.message." + action.getId(), action.getValue());
                 case TEXT_BROADCAST -> config.set("actions.texts.broadcast." + action.getId(), action.getValue());
             }
@@ -142,7 +138,7 @@ public class AreaManager {
         try {
             config.save(file);
         } catch (IOException e) {
-            plugin.getLogger().severe("Nepodarilo se ulozit oblast " + area.getName() + ": " + e.getMessage());
+            plugin.getLogger().severe("Nepodařilo se uložit oblast " + area.getName() + ": " + e.getMessage());
         }
     }
 
@@ -169,23 +165,42 @@ public class AreaManager {
         saveArea(area);
     }
 
-    // Metody pro proces vytvareni
-    public boolean isCreating(String name) { return creationSessions.contains(name.toLowerCase()); }
-    public void startCreating(String name) { creationSessions.add(name.toLowerCase()); }
+    public boolean isCreating(String name) {
+        return creationSessions.contains(name.toLowerCase());
+    }
+
+    public void startCreating(String name) {
+        creationSessions.add(name.toLowerCase());
+    }
+
     public void finishCreating(String name) {
         String key = name.toLowerCase();
         creationSessions.remove(key);
         tempPos1.remove(key);
         tempPos2.remove(key);
     }
-    public void setPos1(String name, Location loc) { tempPos1.put(name.toLowerCase(), loc); }
-    public void setPos2(String name, Location loc) { tempPos2.put(name.toLowerCase(), loc); }
-    public Location getPos1(String name) { return tempPos1.get(name.toLowerCase()); }
-    public Location getPos2(String name) { return tempPos2.get(name.toLowerCase()); }
 
-    // Potvrzeni smazani
-    public Map<UUID, DeleteConfirmation> getDeleteConfirmations() { return deleteConfirmations; }
+    public void setPos1(String name, Location loc) {
+        tempPos1.put(name.toLowerCase(), loc);
+    }
 
-    // Chat editace
-    public Map<UUID, PendingEdit> getPendingEdits() { return pendingEdits; }
+    public void setPos2(String name, Location loc) {
+        tempPos2.put(name.toLowerCase(), loc);
+    }
+
+    public Location getPos1(String name) {
+        return tempPos1.get(name.toLowerCase());
+    }
+
+    public Location getPos2(String name) {
+        return tempPos2.get(name.toLowerCase());
+    }
+
+    public Map<UUID, DeleteConfirmation> getDeleteConfirmations() {
+        return deleteConfirmations;
+    }
+
+    public Map<UUID, PendingEdit> getPendingEdits() {
+        return pendingEdits;
+    }
 }
