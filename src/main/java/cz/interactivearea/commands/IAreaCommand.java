@@ -40,7 +40,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(MessageUtil.parse("&bInteractiveArea &7- Pouzij &e/iarea <admin|area|tp|area-visualize|reload>"));
+            sender.sendMessage(MessageUtil.parse("&bInteractiveArea &7- Použij &e/iarea <admin|area|tp|area-visualize|reload>"));
             return true;
         }
 
@@ -58,7 +58,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // /iarea tp <nazev>
+        // /iarea tp <název>
         if (sub.equals("tp")) {
             if (!sender.hasPermission("iarea.tp")) {
                 MessageUtil.sendConfigMessage(sender, "no-permission");
@@ -69,7 +69,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             if (args.length < 2) {
-                sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea tp <nazev_oblasti>"));
+                sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea tp <název_oblasti>"));
                 return true;
             }
             Area area = areaManager.getArea(args[1]);
@@ -90,10 +90,10 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // /iarea area-visualize <nazev> <on|off>
+        // /iarea area-visualize <název> <on|off>
         if (sub.equals("area-visualize")) {
             if (args.length < 3) {
-                sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area-visualize <nazev> <on|off>"));
+                sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea area-visualize <název> <on|off>"));
                 return true;
             }
             Area area = areaManager.getArea(args[1]);
@@ -111,10 +111,10 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // /iarea admin <create|delete> <nazev>
+        // /iarea admin <create|delete> <název>
         if (sub.equals("admin")) {
             if (args.length < 3) {
-                sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea admin <create|delete> <nazev>"));
+                sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea admin <create|delete> <název>"));
                 return true;
             }
             String adminAction = args[1].toLowerCase();
@@ -169,10 +169,10 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // /iarea area <nazev> ...
+        // /iarea area <název> ...
         if (sub.equals("area")) {
             if (args.length < 3) {
-                sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area <nazev> <pos1|pos2|addaction|action-list|permission>"));
+                sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea area <název> <pos1|pos2|addaction|action-list|permission>"));
                 return true;
             }
             String areaName = args[1];
@@ -201,7 +201,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
 
             if (areaSub.equals("permission")) {
                 if (args.length < 4) {
-                    sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area " + area.getName() + " permission <permise>"));
+                    sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea area " + area.getName() + " permission <permise>"));
                     return true;
                 }
                 area.setPermission(args[3]);
@@ -212,7 +212,7 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
 
             if (areaSub.equals("addaction")) {
                 if (args.length < 4) {
-                    sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area " + area.getName() + " addaction <teleport|commands|text> ..."));
+                    sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea area " + area.getName() + " addaction <teleport|commands|text> ..."));
                     return true;
                 }
                 String actionCategory = args[3].toLowerCase();
@@ -233,25 +233,25 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
 
                 if (actionCategory.equals("commands")) {
                     if (args.length < 6) {
-                        sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area " + area.getName() + " addaction commands <player|console> <prikaz bez />"));
+                        sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea area " + area.getName() + " addaction commands <player|console> <příkaz bez />"));
                         return true;
                     }
-                    AreaAction.CommandExecutorType execType = args[4].equalsIgnoreCase("player")
-                            ? AreaAction.CommandExecutorType.PLAYER : AreaAction.CommandExecutorType.CONSOLE;
+                    boolean isPlayer = args[4].equalsIgnoreCase("player");
+                    AreaAction.ActionType cmdType = isPlayer ? AreaAction.ActionType.COMMAND_PLAYER : AreaAction.ActionType.COMMAND_CONSOLE;
                     String cmd = String.join(" ", Arrays.copyOfRange(args, 5, args.length));
-                    if (cmd.startsWith("/")) cmd = cmd.substring(1);
+                    if (cmd.startsWith("/")) {
+                        cmd = cmd.substring(1);
+                    }
 
-                    AreaAction action = new AreaAction(AreaAction.ActionType.COMMAND, cmd);
-                    action.setExecutorType(execType);
-                    area.getActions().add(action);
+                    area.getActions().add(new AreaAction(cmdType, cmd));
                     areaManager.saveArea(area);
-                    MessageUtil.sendConfigMessage(sender, "action-added", "%type%", "command", "%area%", area.getName());
+                    MessageUtil.sendConfigMessage(sender, "action-added", "%type%", cmdType.getDisplayName(), "%area%", area.getName());
                     return true;
                 }
 
                 if (actionCategory.equals("text")) {
                     if (args.length < 6) {
-                        sender.sendMessage(MessageUtil.parse("&cPouzij: /iarea area " + area.getName() + " addaction text <brodcast|message> <zprava>"));
+                        sender.sendMessage(MessageUtil.parse("&cPoužij: /iarea area " + area.getName() + " addaction text <brodcast|message> <zpráva>"));
                         return true;
                     }
                     String textMode = args[4].toLowerCase();
@@ -282,14 +282,13 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // Přímá aktualizace hodnoty akce přes /iarea area <nazev> setvalue <id> <nova_hodnota>
             if (areaSub.equals("setvalue") && args.length >= 5) {
                 String actionId = args[3];
                 String newValue = String.join(" ", Arrays.copyOfRange(args, 4, args.length));
 
                 AreaAction action = area.getActionById(actionId);
                 if (action == null) {
-                    sender.sendMessage(MessageUtil.parse("&cAkce s timto ID neexistuje!"));
+                    sender.sendMessage(MessageUtil.parse("&cAkce s tímto ID neexistuje!"));
                     return true;
                 }
 
@@ -329,11 +328,11 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
 
     public static void sendActionList(CommandSender sender, Area area) {
         InteractiveAreaPlugin plugin = InteractiveAreaPlugin.getInstance();
-        String header = plugin.getConfig().getString("messages.action-list-header", "&bAkce dane oblasti jsou:");
+        String header = plugin.getConfig().getString("messages.action-list-header", "&bAkce dané oblasti jsou:");
         sender.sendMessage(MessageUtil.parse(header));
 
         if (area.getActions().isEmpty()) {
-            String empty = plugin.getConfig().getString("messages.action-list-empty", "&7- &oZadne akce nejsou nastaveny.");
+            String empty = plugin.getConfig().getString("messages.action-list-empty", "&7- &oŽádné akce nejsou nastaveny.");
             sender.sendMessage(MessageUtil.parse(empty));
             return;
         }
@@ -360,15 +359,14 @@ public class IAreaCommand implements CommandExecutor, TabCompleter {
 
             Component lineComp = MessageUtil.parse(beforeType + typeStr + betweenTypeAndVal);
 
-            // Kliknutím na %value% se předvyplní příkaz /iarea area <nazev> setvalue <id> <hodnota> do chatu
             String suggestCommandText = "/iarea area " + area.getName() + " setvalue " + action.getId() + " " + displayVal;
             Component valueComp = MessageUtil.parse(displayVal)
-                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&eKlikni pro rychlou upravu v chatu")))
+                    .hoverEvent(HoverEvent.showText(MessageUtil.parse("&eKlikni pro rychlou úpravu v chatu")))
                     .clickEvent(ClickEvent.suggestCommand(suggestCommandText));
 
             Component removeComp = MessageUtil.parse(beforeRemove)
                     .append(MessageUtil.parse("&c(-)")
-                            .hoverEvent(HoverEvent.showText(MessageUtil.parse("&cKlikni pro smazani akce")))
+                            .hoverEvent(HoverEvent.showText(MessageUtil.parse("&cKlikni pro smazání akce")))
                             .clickEvent(ClickEvent.runCommand("/iarea area " + area.getName() + " removeaction " + action.getId())))
                     .append(MessageUtil.parse(afterRemove));
 
