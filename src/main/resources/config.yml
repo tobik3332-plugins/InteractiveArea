@@ -10,39 +10,44 @@ settings:
   visualize-particle: CLOUD
 
 messages:
-  prefix: "&8[&bInteractiveArea&8] &r"
+  prefix: "&8[&cInteractiveArea&8] &r"
   no-permission: "&cNa tento příkaz nemáš oprávnění!"
   only-players: "&cTento příkaz mohou použít pouze hráči ve hře."
-  reload-success: "&aPlugin, config.yml a všechny oblasti byly úspěšně reloadovány!"
-  area-not-found: "&cOblast &e%area% &cneexistuje!"
-  area-already-exists: "&cOblast &e%area% &cuž existuje!"
+  reload-success: "&7Plugin, config.yml a všechny oblasti byly úspěšně reloadovány!"
+  area-not-found: "&cOblast &c%area% &cneexistuje!"
+  area-already-exists: "&cOblast &c%area% &cuž existuje!"
   
   # Vytváření oblasti
-  create-started: "&aZahájil jsi vytváření oblasti &e%area%&a. Nyní nastav &f/iarea area %area% pos1 &aa &fpos2&a, poté napiš znovu &f/iarea admin create %area%&a."
+  create-started: "&7Zahájil jsi vytváření oblasti &c%area%&7. Nyní nastav &f/iarea area %area% pos1 &7a &fpos2&7, poté napiš znovu &f/iarea admin create %area%&7."
   create-missing-pos: "&cMusíš nejdříve nastavit oba body (pos1 a pos2) ve stejném světě!"
-  create-success: "&aOblast &e%area% &abyla úspěšně vytvořena a uložena!"
-  pos1-set: "&aBod &ePOS 1 &apro oblast &e%area% &abyl nastaven na tvé aktuální pozici."
-  pos2-set: "&aBod &ePOS 2 &apro oblast &e%area% &abyl nastaven na tvé aktuální pozici."
+  create-success: "&7Oblast &c%area% &7byla úspěšně vytvořena a uložena!"
+  pos1-set: "&7Bod &cPOS 1 &7pro oblast &c%area% &7byl nastaven na tvé aktuální pozici."
+  pos2-set: "&7Bod &cPOS 2 &7pro oblast &c%area% &7byl nastaven na tvé aktuální pozici."
   
   # Mazání oblasti
-  delete-confirm: "&eOpravdu chceš smazat oblast &c%area%&e? Napiš příkaz &f/iarea admin delete %area% &eznovu do 5 sekund pro potvrzení."
-  delete-success: "&aOblast &e%area% &aa její soubor byly úspěšně smazány."
+  delete-confirm: "&cOpravdu chceš smazat oblast &c%area%&c? Napiš příkaz &f/iarea admin delete %area% &cznovu do 5 sekund pro potvrzení."
+  delete-success: "&7Oblast &c%area% &7a její soubor byly úspěšně smazány."
   
   # Teleportace
-  tp-success: "&aByl jsi teleportován k oblasti &e%area%&a."
+  tp-success: "&7Byl jsi teleportován k oblasti &c%area%&7."
   
   # Vizualizace
-  visualize-on: "&aVizualizace oblasti &e%area% &abyla &2ZAPNUTA&a."
-  visualize-off: "&aVizualizace oblasti &e%area% &abyla &cVYPNUTA&a."
+  visualize-on: "&7Vizualizace oblasti &c%area% &7byla &2ZAPNUTA&7."
+  visualize-off: "&7Vizualizace oblasti &c%area% &7byla &cVYPNUTA&7."
   
   # Nastavení akce a permise
-  permission-set: "&aPermise oblasti &e%area% &abyla nastavena na &f%permission%&a."
-  action-added: "&aAkce typu &e%type% &abyla přidána do oblasti &e%area%&a."
-  action-removed: "&cAkce byla odebrána z oblasti &e%area%&c."
-  action-updated: "&aHodnota akce byla úspěšně aktualizována!"
-  invalid-teleport-format: "&cŠpatný formát! Použij: &esvět x y z &c(např. world 100.5 64 -20.0)"
+  permission-set: "&7Permise oblasti &c%area% &7byla nastavena na &f%permission%&7."
+  action-added: "&7Akce typu &c%type% &7byla přidána do oblasti &c%area%&7."
+  action-removed: "&cAkce byla odebrána z oblasti &c%area%&c."
+  action-updated: "&7Hodnota akce byla úspěšně aktualizována!"
+  invalid-teleport-format: "&cŠpatný formát! Použij: &csvět x y z &c(např. world 100.5 64 -20.0)"
   
   # Vzhled /iarea area <název> action-list
-  action-list-header: "&bAkce dané oblasti jsou:"
+  action-list-header: "&cAkce dané oblasti jsou:"
   action-list-empty: "&7- &oŽádné akce nejsou nastaveny."
-  action-list-line: "&7- &e%type% %value% &c(-)"
+  action-list-line: "&7- &c%type% %value% &c(-)"
+
+  # Vzhled /iarea admin list
+  area-list-header: "&cSeznam všech oblastí na serveru:"
+  area-list-empty: "&7- &oŽádné oblasti zatím nebyly vytvořeny."
+  area-list-line: "&7- &c%area% &8(&7%world%: %pos1% -> %pos2%&8)"
